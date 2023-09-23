@@ -1,13 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "metadata": {
-    "_generator": {
-      "name": "bicep",
-      "version": "0.13.1.58284",
-      "templateHash": "17567019607531788589"
-    }
-  },
   "parameters": {
     "adminUsername": {
       "type": "string",
@@ -63,7 +56,7 @@
     },
     "virtualMachineName": {
       "type": "string",
-      "defaultValue": "adVM",
+      "defaultValue": "dc01",
       "maxLength": 15,
       "metadata": {
         "description": "Virtual machine name."
@@ -71,7 +64,7 @@
     },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "adVNET",
+      "defaultValue": "sms-vnet",
       "metadata": {
         "description": "Virtual network name."
       }
@@ -83,30 +76,16 @@
         "description": "Virtual network address range."
       }
     },
-    "loadBalancerFrontEndIPName": {
-      "type": "string",
-      "defaultValue": "LBFE",
-      "metadata": {
-        "description": "Load balancer front end IP address name."
-      }
-    },
-    "backendAddressPoolName": {
-      "type": "string",
-      "defaultValue": "LBBE",
-      "metadata": {
-        "description": "Backend address pool name."
-      }
-    },
     "inboundNatRulesName": {
       "type": "string",
-      "defaultValue": "adRDP",
+      "defaultValue": "AllowRdpInbound",
       "metadata": {
         "description": "Inbound NAT rules name."
       }
     },
     "networkInterfaceName": {
       "type": "string",
-      "defaultValue": "adNic",
+      "defaultValue": "dc01-nic",
       "metadata": {
         "description": "Network interface name."
       }
@@ -120,7 +99,7 @@
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "adSubnet",
+      "defaultValue": "ad-subnet",
       "metadata": {
         "description": "Subnet name."
       }
@@ -134,23 +113,9 @@
     },
     "publicIPAddressName": {
       "type": "string",
-      "defaultValue": "adPublicIP",
+      "defaultValue": "dc01-nic-pip",
       "metadata": {
         "description": "Subnet IP range."
-      }
-    },
-    "availabilitySetName": {
-      "type": "string",
-      "defaultValue": "adAvailabiltySet",
-      "metadata": {
-        "description": "Availability set name."
-      }
-    },
-    "loadBalancerName": {
-      "type": "string",
-      "defaultValue": "adLoadBalancer",
-      "metadata": {
-        "description": "Load balancer name."
       }
     }
   },
@@ -168,59 +133,6 @@
       }
     },
     {
-      "type": "Microsoft.Compute/availabilitySets",
-      "apiVersion": "2022-08-01",
-      "name": "[parameters('availabilitySetName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "platformUpdateDomainCount": 20,
-        "platformFaultDomainCount": 2
-      },
-      "sku": {
-        "name": "Aligned"
-      }
-    },
-    {
-      "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2022-07-01",
-      "name": "[parameters('loadBalancerName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "frontendIPConfigurations": [
-          {
-            "name": "[parameters('loadBalancerFrontEndIPName')]",
-            "properties": {
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressName'))]"
-              }
-            }
-          }
-        ],
-        "backendAddressPools": [
-          {
-            "name": "[parameters('backendAddressPoolName')]"
-          }
-        ],
-        "inboundNatRules": [
-          {
-            "name": "[parameters('inboundNatRulesName')]",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('loadBalancerName'), parameters('loadBalancerFrontEndIPName'))]"
-              },
-              "protocol": "Tcp",
-              "frontendPort": 3389,
-              "backendPort": 3389,
-              "enableFloatingIP": false
-            }
-          }
-        ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressName'))]"
-      ]
-    },
-    {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2022-07-01",
       "name": "[parameters('networkInterfaceName')]",
@@ -234,23 +146,12 @@
               "privateIPAddress": "[parameters('privateIPAddress')]",
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
-              },
-              "loadBalancerBackendAddressPools": [
-                {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancerName'), parameters('backendAddressPoolName'))]"
-                }
-              ],
-              "loadBalancerInboundNatRules": [
-                {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('loadBalancerName'), parameters('inboundNatRulesName'))]"
-                }
-              ]
+              }
             }
           }
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName'))]",
         "[resourceId('Microsoft.Resources/deployments', 'VNet')]"
       ]
     },
@@ -263,9 +164,6 @@
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-        },
         "osProfile": {
           "computerName": "[parameters('virtualMachineName')]",
           "adminUsername": "[parameters('adminUsername')]",
@@ -275,7 +173,7 @@
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "2019-Datacenter",
+            "sku": "2022-Datacenter",
             "version": "latest"
           },
           "osDisk": {
@@ -283,7 +181,7 @@
             "caching": "ReadOnly",
             "createOption": "FromImage",
             "managedDisk": {
-              "storageAccountType": "StandardSSD_LRS"
+              "storageAccountType": "Premium_LRS"
             }
           },
           "dataDisks": [
@@ -293,7 +191,7 @@
               "createOption": "Empty",
               "diskSizeGB": 20,
               "managedDisk": {
-                "storageAccountType": "StandardSSD_LRS"
+                "storageAccountType": "Premium_LRS"
               },
               "lun": 0
             }
@@ -308,8 +206,6 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]",
-        "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
       ]
     },
@@ -373,13 +269,6 @@
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "7676624414886455368"
-            }
-          },
           "parameters": {
             "virtualNetworkName": {
               "type": "string",
@@ -472,13 +361,6 @@
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "12019049826642862479"
-            }
-          },
           "parameters": {
             "virtualNetworkName": {
               "type": "string",

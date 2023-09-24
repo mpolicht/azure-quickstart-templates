@@ -1,23 +1,24 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "metadata": {
-    "_generator": {
-      "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "16594126968631223272"
-    }
-  },
   "parameters": {
+    "vmName": {
+      "type": "string",
+      "defaultValue": "svr01",
+      "metadata": {
+        "description": "Name of VM"
+      }
+    },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A2_v2",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of VM"
       }
     },
     "existingVnetName": {
       "type": "string",
+      "defaultValue": "sms-vnet",
       "metadata": {
         "description": "Existing VNET that contains the domain controller"
       }
@@ -31,6 +32,7 @@
     },
     "existingSubnetName": {
       "type": "string",
+      "defaultValue": "sms-source-subnet",
       "metadata": {
         "description": "Existing subnet that contains the domain controller"
       }
@@ -45,6 +47,7 @@
     },
     "domainToJoin": {
       "type": "string",
+      "defaultValue": "contoso.com",
       "metadata": {
         "description": "The FQDN of the AD domain"
       }
@@ -87,13 +90,6 @@
         "description": "The password for the administrator account of the new VM."
       }
     },
-    "storageAccountName": {
-      "type": "string",
-      "defaultValue": "[uniqueString(resourceGroup().id, deployment().name)]",
-      "metadata": {
-        "description": "The name of the storage account."
-      }
-    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -105,30 +101,20 @@
   "variables": {
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
-    "windowsOSVersion": "2019-Datacenter",
-    "nicName": "[format('{0}-nic', parameters('dnsLabelPrefix'))]"
+    "windowsOSVersion": "2022-Datacenter",
+    "nicName": "[format('{0}-nic', parameters('vmName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2021-02-01",
-      "name": "[parameters('publicIPAddressName')]",
+      "name": "[format('{0}-nic-pip', parameters('vmName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
           "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-04-01",
-      "name": "[parameters('storageAccountName')]",
-      "location": "[parameters('location')]",
-      "kind": "StorageV2",
-      "sku": {
-        "name": "Standard_LRS"
       }
     },
     {
@@ -159,14 +145,14 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2021-03-01",
-      "name": "[parameters('dnsLabelPrefix')]",
+      "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('dnsLabelPrefix')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -178,16 +164,16 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[format('{0}-OsDisk', parameters('dnsLabelPrefix'))]",
+            "name": "[format('{0}-OsDisk', parameters('vmName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[format('{0}-DataDisk', parameters('dnsLabelPrefix'))]",
+              "name": "[format('{0}-DataDisk1', parameters('vmName'))]",
               "caching": "None",
               "createOption": "Empty",
-              "diskSizeGB": 1024,
+              "diskSizeGB": 127,
               "lun": 0
             }
           ]
@@ -198,17 +184,10 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))).primaryEndpoints.blob]"
-          }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ]
     },
     {
@@ -233,7 +212,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('dnsLabelPrefix'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
     }
   ]

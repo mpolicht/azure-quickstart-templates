@@ -25,7 +25,7 @@
     },
     "publicIPAddressName": {
       "type": "string",
-      "defaultValue": "[format('{0}-pip', parameters('dnsLabelPrefix'))]",
+      "defaultValue": "[format('{0}-nic-pip', parameters('vmName'))]",
       "metadata": {
         "description": "Public IP address name"
       }

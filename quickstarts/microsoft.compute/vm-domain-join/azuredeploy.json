@@ -193,7 +193,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2021-03-01",
-      "name": "[format('{0}/{1}', parameters('dnsLabelPrefix'), 'joindomain')]",
+      "name": "[format('{0}/{1}', parameters('vmName'), 'joindomain')]",
       "location": "[parameters('location')]",
       "properties": {
         "publisher": "Microsoft.Compute",

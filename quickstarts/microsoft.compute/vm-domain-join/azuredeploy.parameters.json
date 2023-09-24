@@ -9,19 +9,19 @@
         "value": "GEN-PASSWORD"
       },
       "existingVnetName": {
-        "value": "GET-PREREQ-virtualNetworkName"
+        "value": "sms-vnet"
       },
       "publicIPAddressName": {
-        "value": "GEN-UNIQUE"
+        "value": "svr01-nic0-pip"
       },
       "existingSubnetName": {
-        "value": "GET-PREREQ-subnetName"
+        "value": "sms-source-subnet"
       },
       "vmSize": {
         "value": "Standard_D2s_v3"
       },
       "domainToJoin": {
-        "value": "GET-PREREQ-domainName"
+        "value": "contoso.com"
       },
       "domainUsername": {
         "value": "GET-PREREQ-adUsername"
@@ -31,9 +31,6 @@
       },
       "domainJoinOptions": {
         "value": 3
-      },
-      "storageAccountName": {
-          "value": "GEN-UNIQUE"
       },
       "dnsLabelPrefix": {
           "value": "GEN-UNIQUE-10"
